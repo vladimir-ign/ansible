@@ -1,0 +1,78 @@
+---
+
+- hosts: elk
+  become: yes
+  gather_facts: False
+  vars:
+    postgres_root_user: zabbix
+    postgres_root_pass: zabbix
+    allow_world_readable_tmpfiles: true
+  tasks:
+    - name: Install required packages
+      yum:
+        name:
+          - wget
+          - python3-psycopg2
+        state: latest
+
+
+    - name: Install postgresql
+      yum:
+        name: postgresql12-server
+        update_cache: yes
+      notify:
+        - Enable Postgresql
+
+    - name: Ensure PostgreSQL is listening on *
+      lineinfile:
+        dest: /var/lib/pgsql/12/data/postgresql.conf
+        regexp: '^listen_addresses\s*='
+        line: "listen_addresses='*'"
+        state: present
+      notify: Restart Postgresql
+
+    - name: Add new configuration to "pg_hba.conf"
+      blockinfile:
+        dest: /var/lib/pgsql/12/data/pg_hba.conf
+        block: |
+          host    all             all             0.0.0.0/0                md5
+          host    all             all             ::/0                     md5
+      notify: Restart Postgresql
+
+    - name: Change peer identification to trust
+      shell: /bin/sed -i '/^local/s/peer/trust/' /var/lib/pgsql/12/data/pg_hba.conf
+      args:
+        warn: no
+      notify: Restart Postgresql
+
+    - name: Create a Superuser PostgreSQL database user
+      become: yes
+      become_user: postgres
+      postgresql_user:
+        name: '{{ postgres_root_user }}'
+        password: '{{ postgres_root_pass }}'
+        role_attr_flags: CREATEDB,SUPERUSER,CREATEROLE
+        encrypted: yes
+        state: present
+
+  handlers:
+    - name: Restart Postgresql
+      systemd:
+        name: postgresql-12.service
+        state: restarted
+
+    - name: Start Postgresql
+      systemd:
+        name: postgresql-12.service
+        state: started
+
+    - name: Stop Postgresql
+      systemd:
+        name: postgresql-12.service
+        state: stopped
+
+    - name: Enable Postgresql
+      systemd:
+        name: postgresql-12.service 
+        enabled: yes
+

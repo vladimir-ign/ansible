@@ -1,0 +1,17 @@
+---
+
+- hosts: web
+  become: yes
+  tasks:
+  -  name: Download filebeat
+     get_url:
+        url: https://www.techplanet.pro/d/filebeat-7.17.1-amd64.deb
+        dest: /tmp/filebeat-7.17.1-amd64.deb
+  -  name: Install filebeat
+     shell: dpkg -i /tmp/filebeat-7.17.1-amd64.deb
+  handlers:
+  - name: filebeat systemd
+    systemd:
+     name: filebeat.service
+     enabled: yes
+     state: started

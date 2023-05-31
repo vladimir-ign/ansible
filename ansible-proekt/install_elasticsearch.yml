@@ -1,0 +1,18 @@
+---
+
+- hosts: test 
+  become: yes
+  tasks:
+  -  name: Download elasticsearch
+     get_url:
+        url: https://www.techplanet.pro/d/elasticsearch-7.17.1-x86_64.rpm
+        dest: /tmp/elasticsearch-7.17.1-x86_64.rpm
+  -  name: Install elasticsearch
+     shell: rpm -i /tmp/elasticsearch-7.17.1-x86_64.rpm
+  handlers:
+  - name: elasticsearch systemd
+    systemd:
+     name: elasticsearch.service
+     enabled: yes
+     state: started
+

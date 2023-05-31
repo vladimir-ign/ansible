@@ -1,0 +1,19 @@
+---
+
+- hosts: web
+  become: yes
+  tasks:
+  -  name: Install  php on Ubuntu
+     apt:
+        name=php7.4
+        state=latest
+     when:
+        ansible_os_family == "Debian"
+     notify:
+        php systemd
+  handlers:
+  - name: php systemd
+    systemd:
+     name: php.service
+     enabled: yes
+     state: started

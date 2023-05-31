@@ -1,0 +1,19 @@
+---
+
+- hosts: web
+  become: yes
+  tasks:
+  -  name: Install  postfix on Ubuntu
+     apt:
+        name=postfix
+        state=latest
+     when:
+        ansible_os_family == "Debian"
+     notify:
+        postfix systemd
+  handlers:
+  - name: postfix systemd
+    systemd:
+     name: postfix.service
+     enabled: yes
+     state: started

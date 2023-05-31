@@ -1,0 +1,19 @@
+---
+
+- hosts: web
+  become: yes
+  tasks:
+  -  name: Install  apache2 on Ubuntu
+     apt:
+        name=apache2
+        state=latest
+     when:
+        ansible_os_family == "Debian"
+     notify:
+        apache2 systemd
+  handlers:
+  - name: apache2 systemd
+    systemd:
+     name: apache2.service
+     enabled: yes
+     state: started
